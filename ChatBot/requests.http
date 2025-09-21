@@ -1,0 +1,25 @@
+###
+# @name conversation
+POST https://localhost:7240/conversations
+
+###
+POST https://localhost:7240/conversations/{{conversation.response.body.$.conversationId}}/chat
+Content-Type: application/json
+
+{
+  "message": "I need flowers."
+}
+
+###
+POST https://localhost:7240/conversations/{{conversation.response.body.$.conversationId}}/chat
+Content-Type: application/json
+
+{
+  "message": "They are for my wife. She loves roses."
+}
+
+###
+POST https://localhost:7240/products/fill-sample-data
+
+###
+POST https://localhost:7240/chat
