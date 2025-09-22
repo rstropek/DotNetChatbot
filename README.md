@@ -54,7 +54,7 @@ As this is primarily a .NET 10 workshop, you will need:
 
 * [.NET 10 SDK (RC 1)](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 * [.NET Aspire](https://learn.microsoft.com/en-us/dotnet/aspire/) templates: `dotnet new install Aspire.ProjectTemplates`
-* [.NET Entity Framework Core Tools (.NET 10 RC 1)](https://learn.microsoft.com/en-us/ef/core/cli/dotnet): `dotnet tool install --global dotnet-ef --prerelease
+* [.NET Entity Framework Core Tools (.NET 10 RC 1)](https://learn.microsoft.com/en-us/ef/core/cli/dotnet): `dotnet tool install --global dotnet-ef --prerelease`
 * [OpenAI API Key](https://platform.openai.com/settings/organization/api-keys) with <= €5 credit
   * Set it in the _AppHost_ project using: `dotnet user-secrets set "Parameters:openai-api-key" sk-proj-...`
 
