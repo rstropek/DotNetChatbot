@@ -62,3 +62,12 @@ As this is primarily a .NET 10 workshop, you will need:
 
 * If you want to also run the UI, you will need [Node.js](https://nodejs.org/en)
 * If you want to run the SQLite web ui, you will need [Docker](https://www.docker.com/) or [Podman](https://podman.io/) (note the [required configuration for Podman](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/setup-tooling?pivots=dotnet-cli#container-runtime))
+
+## Important Links
+
+* [.NET 10 What's New](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/overview)
+* [Official .NET Library for OpenAI](https://github.com/openai/openai-dotnet)
+* [OpenAI API Reference](https://platform.openai.com/docs/api-reference/introduction)
+* [Model Context Protocol (MCP) Specification](https://modelcontextprotocol.io/docs/getting-started/intro)
+* [Official C# SDK for MCP](https://github.com/modelcontextprotocol/csharp-sdk)
+* [.NET Aspire Documentation](https://learn.microsoft.com/en-us/dotnet/aspire/)
