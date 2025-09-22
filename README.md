@@ -65,6 +65,7 @@ As this is primarily a .NET 10 workshop, you will need:
 
 ## Important Links
 
+* **[Live View of Rainer's Code](https://dev-01.rstropek.com/files/) during the workshop** (Code `BASTA`)
 * [.NET 10 What's New](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/overview)
 * [Official .NET Library for OpenAI](https://github.com/openai/openai-dotnet)
 * [OpenAI API Reference](https://platform.openai.com/docs/api-reference/introduction)
