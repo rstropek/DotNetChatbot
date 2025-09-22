@@ -32,10 +32,32 @@ The chatbot acts as a friendly flower shop salesperson, helping customers choose
 - Function calling and tool integration via MCP
 - Real-time streaming responses
 - Database persistence
-- Modern web UI interactions
+- Web UI interactions
 
 ## Getting Started
 
 This is a workshop sample designed to showcase .NET 10 capabilities. Each subfolder contains its own README with specific details about that component's role in the overall architecture.
 
 Run the solution using .NET Aspire to see all components working together in a fully orchestrated environment.
+
+## What You Need to Participate
+
+### IDE
+
+During the workshop, we will be using [Visual Studio Code](https://code.visualstudio.com/) with the [C# Dev Kit](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit) extension. You can use other IDEs (e.g. Visual Studio, Rider) if you prefer, but the instructions will be based on VS Code.
+
+To raise developer productivity, it is highly recommended to install an AI coding assistant like [GitHub Copilot](https://github.com/features/copilot), [Kilo Code](https://kilocode.ai/), etc.
+
+### Mandatory
+
+As this is primarily a .NET 10 workshop, you will need:
+
+* [.NET 10 SDK (RC 1)](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
+* [.NET Aspire](https://learn.microsoft.com/en-us/dotnet/aspire/) templates: `dotnet new install Aspire.ProjectTemplates`
+* [.NET Entity Framework Core Tools (.NET 10 RC 1)](https://learn.microsoft.com/en-us/ef/core/cli/dotnet): `dotnet tool install --global dotnet-ef --prerelease
+* [OpenAI API Key](https://platform.openai.com/settings/organization/api-keys) with <= €5 credit
+
+### Optional
+
+* If you want to also run the UI, you will need [Node.js](https://nodejs.org/en)
+* If you want to run the SQLite web ui, you will need [Docker](https://www.docker.com/) or [Podman](https://podman.io/) (note the [required configuration for Podman](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/setup-tooling?pivots=dotnet-cli#container-runtime))
