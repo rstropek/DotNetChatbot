@@ -63,6 +63,19 @@ As this is primarily a .NET 10 workshop, you will need:
 * If you want to also run the UI, you will need [Node.js](https://nodejs.org/en)
 * If you want to run the SQLite web ui, you will need [Docker](https://www.docker.com/) or [Podman](https://podman.io/) (note the [required configuration for Podman](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/setup-tooling?pivots=dotnet-cli#container-runtime))
 
+## Code Analysis
+
+The solution uses `AnalysisLevel=latest-all` for comprehensive code analysis. Several warnings are globally suppressed in `Directory.Build.props` because they are not applicable to ASP.NET Core applications:
+
+| Warning | Reason for Suppression |
+|---------|----------------------|
+| **CA2007** (ConfigureAwait) | ASP.NET Core has no `SynchronizationContext`, so `ConfigureAwait(false)` is unnecessary and adds noise without benefit. |
+| **CA1515** (Types should be internal) | ASP.NET Core requires many types to be public for minimal API endpoints, model binding, DI registration, and framework conventions. |
+| **CA1062** (Validate parameters for null) | Parameters in ASP.NET Core endpoints and services are injected by the DI container or model binder, which guarantees they are non-null. |
+| **CA1849** (Use async alternative) | `app.Run()` is the standard pattern in ASP.NET Core application templates; `RunAsync()` is not required in `Program.cs`. |
+| **CA1034** (Do not nest types) | C# 14 extension blocks trigger this warning as a false positive since extension members appear as nested types to the analyzer. |
+| **CA1708** (Names should differ by more than case) | C# 14 extension blocks on different types in the same class trigger this warning as a false positive. |
+
 ## Important Links
 
 * **[Live View of Rainer's Code](https://dev-01.rstropek.com/files/) during the workshop** (Code `BASTA`)

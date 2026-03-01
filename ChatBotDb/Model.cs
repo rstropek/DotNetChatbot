@@ -5,7 +5,7 @@ namespace ChatBotDb;
 public class Conversation
 {
     public int Id { get; set; }
-    public Collection<Message> Messages { get; set; } = [];
+    public Collection<Message> Messages { get; } = [];
 }
 
 public class Message

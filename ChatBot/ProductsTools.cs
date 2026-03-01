@@ -2,7 +2,7 @@ using OpenAI.Responses;
 
 namespace ChatBot;
 
-public class ProductsTools
+public static class ProductsTools
 {
     public static readonly FunctionTool GetAvailableColorsForFlowerTool = ResponseTool.CreateFunctionTool(
         functionName: nameof(GetAvailableColorsForFlower),

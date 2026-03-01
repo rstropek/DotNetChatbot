@@ -29,11 +29,13 @@ public class McpToolsProvider(IConfiguration config, ILoggerFactory loggerFactor
                 return (mcpClient, mcpTools);
             }
 
+#pragma warning disable CA2000 // Transport ownership is transferred to McpClient, disposed via DisposeAsync
             var transport = new HttpClientTransport(new HttpClientTransportOptions
             {
                 Endpoint = new Uri(config["Services:cart-mcp:http:0"]!),
                 Name = "Shopping Cart MCP"
             });
+#pragma warning restore CA2000
             mcpClient = await McpClient.CreateAsync(transport, loggerFactory: loggerFactory);
             mcpTools = await mcpClient.ListFunctionTools();
             if (mcpTools.Length == 0)

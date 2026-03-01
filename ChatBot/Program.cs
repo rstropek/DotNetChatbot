@@ -15,7 +15,7 @@ builder.Services.AddScoped<OpenAIManager>();
 builder.Services.AddSingleton(_ => new ResponsesClient(
     new System.ClientModel.ApiKeyCredential(builder.Configuration["OPENAI_API_KEY"]!)));
 
-builder.Services.AddSingleton(new ActivitySource(
+builder.Services.AddSingleton(_ => new ActivitySource(
     builder.Configuration["OTEL_SERVICE_NAME"] ?? throw new InvalidOperationException("OTEL_SERVICE_NAME not set")));
 
 builder.Services.AddCors();
