@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <EnableSourceLink>false</EnableSourceLink>
+    <NoWarn>$(NoWarn);OPENAI001</NoWarn>
+  </PropertyGroup>
+</Project>

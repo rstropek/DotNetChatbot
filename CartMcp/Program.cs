@@ -26,7 +26,7 @@ app.Run();
 public sealed class CartTool()
 {
     [McpServerTool, Description("Stores a flower bouquet in the shopping cart")]
-    public static string AddToCart(CartItem item, ApplicationDataContext context)
+    public static async Task<string> AddToCart(CartItem item, ApplicationDataContext context)
     {
         var order = new Order
         {
@@ -35,7 +35,7 @@ public sealed class CartTool()
             Size = item.Size
         };
         context.Orders.Add(order);
-        context.SaveChanges();
+        await context.SaveChangesAsync();
 
         // Note that we can return whatever we want. Could be a complex object, too.
         return $"Added to cart. The Cart ID is {order.Id}.";

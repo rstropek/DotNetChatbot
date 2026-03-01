@@ -1,0 +1,12 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="CartMcp/CartMcp.csproj" />
+  <Project Path="ChatBot/ChatBot.csproj" />
+  <Project Path="ChatBotDb/ChatBotDb.csproj" />
+  <Project Path="DotNetChatbot.AppHost/DotNetChatbot.AppHost.csproj" />
+  <Project Path="DotNetChatbot.ServiceDefaults/DotNetChatbot.ServiceDefaults.csproj" />
+</Solution>

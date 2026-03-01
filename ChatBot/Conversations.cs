@@ -36,6 +36,11 @@ public static class ConversationEndpoints
         NewMessageRequest request,
         CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(request.Message))
+        {
+            return Results.BadRequest("Message must not be empty.");
+        }
+
         using (var span = source.StartActivity("Add message to conversation"))
         {
             try
@@ -43,13 +48,12 @@ public static class ConversationEndpoints
                 var userMessage = ResponseItem.CreateUserMessageItem(request.Message);
                 await context.AddResponseToConversation(conversationId, userMessage);
             }
-            catch (ConversionNotFoundException)
+            catch (ConversationNotFoundException)
             {
                 span?.SetStatus(ActivityStatusCode.Error, "Conversation not found");
                 return Results.NotFound();
             }
         }
-
 
         return TypedResults.ServerSentEvents(openAIManager.GetAssistantStreaming(conversationId, cancellationToken), eventType: "textDelta");
     }
@@ -57,7 +61,4 @@ public static class ConversationEndpoints
     public record NewConversationResponse(int ConversationId);
 
     public record NewMessageRequest(string Message);
-    public record NewMessageResponse(int MessageId);
-
-    record AssistantResponseMessage(string DeltaText);
 }

@@ -5,9 +5,9 @@ namespace ChatBotDb;
 
 public partial class ApplicationDataContext(DbContextOptions<ApplicationDataContext> options) : DbContext(options)
 {
-    public DbSet<Conversation> Conversations => Set<Conversation>();
-    public DbSet<Message> Messages => Set<Message>();
-    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<Conversation> Conversations { get; set; }
+    public DbSet<Message> Messages { get; set; }
+    public DbSet<Order> Orders { get; set; }
 }
 
 public class ApplicationDataContextFactory : IDesignTimeDbContextFactory<ApplicationDataContext>

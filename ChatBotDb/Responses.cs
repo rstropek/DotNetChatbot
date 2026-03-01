@@ -7,20 +7,11 @@ using OpenAI.Responses;
 
 namespace ChatBotDb;
 
-#pragma warning disable OPENAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-
 public interface IConversationRepository
 {
     Task<List<ResponseItem>> GetConversation(int conversationId);
     Task AddResponseToConversation(int conversationId, ResponseItem responseItem);
 
-    async Task AddResponsesToConversation(int conversationId, IEnumerable<ResponseItem> responseItems)
-    {
-        foreach (var item in responseItems)
-        {
-            await AddResponseToConversation(conversationId, item);
-        }
-    }
 }
 
 public class ConversationRepository(ApplicationDataContext context) : IConversationRepository
@@ -30,7 +21,7 @@ public class ConversationRepository(ApplicationDataContext context) : IConversat
         var conversation = await context.Conversations
             .Include(c => c.Messages)
             .FirstOrDefaultAsync(c => c.Id == conversationId)
-            ?? throw new ConversionNotFoundException();
+            ?? throw new ConversationNotFoundException();
 
         return [.. conversation.Messages
             .OrderBy(m => m.Id)
@@ -42,7 +33,7 @@ public class ConversationRepository(ApplicationDataContext context) : IConversat
     public async Task AddResponseToConversation(int conversationId, ResponseItem responseItem)
     {
         var conversation = await context.Conversations.FirstOrDefaultAsync(c => c.Id == conversationId)
-            ?? throw new ConversionNotFoundException();
+            ?? throw new ConversationNotFoundException();
 
         var itemAsJson = responseItem as IJsonModel<ResponseItem>;
         var buffer = new ArrayBufferWriter<byte>();
@@ -61,4 +52,4 @@ public class ConversationRepository(ApplicationDataContext context) : IConversat
     }
 }
 
-public class ConversionNotFoundException : Exception { }
+public class ConversationNotFoundException : Exception { }

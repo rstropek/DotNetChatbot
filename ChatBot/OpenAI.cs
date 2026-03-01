@@ -1,7 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
 using ChatBotDb;
 using ModelContextProtocol.Client;
@@ -10,11 +8,64 @@ using OpenAI.Responses;
 
 namespace ChatBot;
 
-public class OpenAIManager(OpenAIResponseClient client, IConversationRepository context,
-    IConfiguration config, ILoggerFactory loggerFactory)
+public class McpToolsProvider(IConfiguration config, ILoggerFactory loggerFactory) : IAsyncDisposable
 {
-    private FunctionTool[]? mcpTools = null;
-    private string? developerMessage = null;
+    private McpClient? mcpClient;
+    private FunctionTool[]? mcpTools;
+    private readonly SemaphoreSlim semaphore = new(1, 1);
+
+    public async Task<(McpClient Client, FunctionTool[] Tools)> GetToolsAsync()
+    {
+        if (mcpClient != null && mcpTools != null)
+        {
+            return (mcpClient, mcpTools);
+        }
+
+        await semaphore.WaitAsync();
+        try
+        {
+            if (mcpClient != null && mcpTools != null)
+            {
+                return (mcpClient, mcpTools);
+            }
+
+            var transport = new HttpClientTransport(new HttpClientTransportOptions
+            {
+                Endpoint = new Uri(config["Services:cart-mcp:http:0"]!),
+                Name = "Shopping Cart MCP"
+            });
+            mcpClient = await McpClient.CreateAsync(transport, loggerFactory: loggerFactory);
+            mcpTools = await mcpClient.ListFunctionTools();
+            if (mcpTools.Length == 0)
+            {
+                throw new InvalidOperationException("MCP server offers no tools, this should never happen");
+            }
+
+            return (mcpClient, mcpTools);
+        }
+        finally
+        {
+            semaphore.Release();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (mcpClient != null)
+        {
+            await mcpClient.DisposeAsync();
+        }
+
+        semaphore.Dispose();
+        GC.SuppressFinalize(this);
+    }
+}
+
+public class OpenAIManager(ResponsesClient client, IConversationRepository context,
+    IConfiguration config, McpToolsProvider mcpToolsProvider)
+{
+    private static readonly Lazy<Task<string>> developerMessage = new(LoadDeveloperMessage);
+    private string Model => config["OPENAI_MODEL"] ?? throw new InvalidOperationException("OPENAI_MODEL not set");
 
     public async IAsyncEnumerable<AssistantResponseMessage> GetAssistantStreaming(
         int conversationId,
@@ -24,16 +75,7 @@ public class OpenAIManager(OpenAIResponseClient client, IConversationRepository 
         var conversation = await context.GetConversation(conversationId);
 
         // Get tools provided by MCP server
-        IMcpClient? mcpClient = null;
-        if (mcpTools == null)
-        {
-            mcpClient = await GetMcpClient();
-            mcpTools = await mcpClient.ListFunctionTools();
-            if (mcpTools.Length == 0)
-            {
-                throw new InvalidOperationException("MCP server offers no tools, this should never happen");
-            }
-        }
+        var (mcpClient, mcpTools) = await mcpToolsProvider.GetToolsAsync();
 
         // We loop until no more function calls are required
         bool requiresAction;
@@ -41,9 +83,9 @@ public class OpenAIManager(OpenAIResponseClient client, IConversationRepository 
         {
             requiresAction = false;
 
-            var options = await GetResponseCreationOptions();
+            var options = await GetResponseCreationOptions(conversation, mcpTools);
 
-            var response = client.CreateResponseStreamingAsync(conversation, options, cancellationToken);
+            var response = client.CreateResponseStreamingAsync(options, cancellationToken);
             await foreach (var chunk in response)
             {
                 if (cancellationToken.IsCancellationRequested) { yield break; }
@@ -69,11 +111,11 @@ public class OpenAIManager(OpenAIResponseClient client, IConversationRepository 
 
                         // For demo purposes, we notify the client of the function call
                         yield return new AssistantResponseMessage($"""
-                            
+
                             ```txt
                             {functionCall.FunctionName}({functionCall.FunctionArguments})
                             ```
-                            
+
                             """);
 
                         switch (functionCall.FunctionName)
@@ -90,13 +132,13 @@ public class OpenAIManager(OpenAIResponseClient client, IConversationRepository 
 
                             default:
                                 // This demonstrates how to call a tool provided by the MCP server
-                                var mcpTool = mcpTools!.FirstOrDefault(t => t.FunctionName == functionCall.FunctionName);
+                                var mcpTool = mcpTools.FirstOrDefault(t => t.FunctionName == functionCall.FunctionName);
                                 if (mcpTool != null)
                                 {
-                                    mcpClient ??= await GetMcpClient();
                                     var functionArguments = JsonSerializer.Deserialize<Dictionary<string, object?>>(functionCall.FunctionArguments)!;
                                     var callResult = await mcpClient.CallToolAsync(functionCall.FunctionName, functionArguments);
-                                    functionResult = new FunctionCallOutputResponseItem(functionCall.CallId, (callResult.Content[0] as TextContentBlock)?.Text ?? "");
+                                    var resultText = callResult.Content.OfType<TextContentBlock>().FirstOrDefault()?.Text ?? "";
+                                    functionResult = new FunctionCallOutputResponseItem(functionCall.CallId, resultText);
                                 }
                                 else
                                 {
@@ -115,30 +157,27 @@ public class OpenAIManager(OpenAIResponseClient client, IConversationRepository 
         while (requiresAction);
     }
 
-    private async Task<ResponseCreationOptions> GetResponseCreationOptions()
+    private async Task<CreateResponseOptions> GetResponseCreationOptions(List<ResponseItem> conversation, FunctionTool[] mcpTools)
     {
-        developerMessage ??= await GetDeveloperMessage();
-        var options = new ResponseCreationOptions
+        var options = new CreateResponseOptions(Model, conversation)
         {
-            Instructions = developerMessage,
+            Instructions = await developerMessage.Value,
             ReasoningOptions = new()
             {
                 ReasoningEffortLevel = ResponseReasoningEffortLevel.Low
             },
             MaxOutputTokenCount = 2500,
             StoredOutputEnabled = false,
+            StreamingEnabled = true,
             Tools = { ProductsTools.GetAvailableColorsForFlowerTool }
         };
 
-        if (mcpTools != null)
-        {
-            foreach (var tool in mcpTools) { options.Tools.Add(tool); }
-        }
+        foreach (var tool in mcpTools) { options.Tools.Add(tool); }
 
         return options;
     }
 
-    private async static Task<string> GetDeveloperMessage()
+    private static async Task<string> LoadDeveloperMessage()
     {
         const string resourceName = "ChatBot.developer-message.md";
 
@@ -147,18 +186,6 @@ public class OpenAIManager(OpenAIResponseClient client, IConversationRepository 
             ?? throw new FileNotFoundException($"Resource {resourceName} not found.");
         using var reader = new StreamReader(stream);
         return await reader.ReadToEndAsync();
-    }
-
-    private async Task<IMcpClient> GetMcpClient()
-    {
-        // Note that the names of these classes will change in the near future.
-        // They have already been change in the GitHub repo, but not yet in the NuGet package.
-        var transport = new SseClientTransport(new()
-        {
-            Endpoint = new Uri(config["Services:cart-mcp:http:0"]!),
-            Name = "Shopping Cart MCP"
-        }, loggerFactory);
-        return await McpClientFactory.CreateAsync(transport, loggerFactory: loggerFactory);
     }
 
     public record AssistantResponseMessage(string DeltaText);
@@ -176,9 +203,9 @@ public static class McpClientToolExtensions
             strictModeEnabled: false);
     }
 
-    extension(IMcpClient mcpClient)
+    extension(McpClient client)
     {
         public async Task<FunctionTool[]> ListFunctionTools() =>
-            [.. (await mcpClient.ListToolsAsync()).Select(t => t.ToFunctionTool())];
+            [.. (await client.ListToolsAsync()).Select(t => t.ToFunctionTool())];
     }
 }
