@@ -23,7 +23,9 @@ app.MapMcp();
 app.Run();
 
 [McpServerToolType]
+#pragma warning disable CA1050 // Declare types in namespaces
 public sealed class CartTool()
+#pragma warning restore CA1050 // Declare types in namespaces
 {
     [McpServerTool, Description("Stores a flower bouquet in the shopping cart")]
     public static async Task<string> AddToCart(CartItem item, ApplicationDataContext context)

@@ -136,7 +136,7 @@ public class OpenAIManager(ResponsesClient client, IConversationRepository conte
                                 if (mcpTool != null)
                                 {
                                     var functionArguments = JsonSerializer.Deserialize<Dictionary<string, object?>>(functionCall.FunctionArguments)!;
-                                    var callResult = await mcpClient.CallToolAsync(functionCall.FunctionName, functionArguments);
+                                    var callResult = await mcpClient.CallToolAsync(functionCall.FunctionName, functionArguments, cancellationToken: cancellationToken);
                                     var resultText = callResult.Content.OfType<TextContentBlock>().FirstOrDefault()?.Text ?? "";
                                     functionResult = new FunctionCallOutputResponseItem(functionCall.CallId, resultText);
                                 }
