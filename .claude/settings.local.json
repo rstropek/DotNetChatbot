@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(dotnet build:*)",
-      "Bash(dotnet:*)"
+      "Bash(dotnet:*)",
+      "mcp__MsLearn__microsoft_docs_search",
+      "mcp__MsLearn__microsoft_docs_fetch"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "MsLearn"
+  ]
 }
