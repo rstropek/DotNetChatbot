@@ -33,6 +33,7 @@ The ChatBot service acts as a flower shop salesperson, providing an intelligent 
 ChatBot/
   Program.cs                         # Registers both implementations, maps both endpoint groups
   McpToolsProvider.cs                # Shared MCP client — provides tools for both implementations
+  DeveloperMessageProvider.cs        # Loads and caches the system prompt from embedded resource
   MigrationManager.cs               # Shared DB migration logic
   developer-message.md              # Shared system prompt (embedded resource)
   Traditional/
@@ -40,9 +41,11 @@ ChatBot/
     Conversations.cs                 # Endpoints at /conversations/...
     ProductsTools.cs                 # FunctionTool definition with manual JSON schema
     FunctionHelpers.cs               # JSON schema generation utility
+    McpToolsExtensions.cs            # Bridges McpClientTool to OpenAI FunctionTool
   AgentFramework/
     AgentManager.cs                  # AIAgent-based implementation with automatic tool handling
     Conversations.cs                 # Endpoints at /af/conversations/...
+    McpToolsExtensions.cs            # Bridges McpToolsProvider to AITool (simple cast)
     README.md                        # Detailed comparison of the two approaches
 ```
 
