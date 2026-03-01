@@ -15,7 +15,7 @@ The ChatBotDb project:
 
 ### Data Models
 - **Conversation**: Represents chat conversations with unique identifiers
-- **ResponseItem**: Stores individual messages and responses within conversations
+- **Message**: Stores individual messages and responses within conversations
 - **Order**: Represents flower bouquet orders placed through the shopping cart
 
 ### Database Context
