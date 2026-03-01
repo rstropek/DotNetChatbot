@@ -1,16 +1,13 @@
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using OpenAI.Responses;
 
 namespace ChatBot.Traditional;
 
 public class OpenAIManager(ResponsesClient client,
-    IConfiguration config, McpToolsProvider mcpToolsProvider)
+    IConfiguration config, McpToolsProvider mcpToolsProvider, DeveloperMessageProvider developerMessageProvider)
 {
-    private static readonly Lazy<Task<string>> developerMessage = new(LoadDeveloperMessage);
     private string Model => config["OPENAI_MODEL"] ?? throw new InvalidOperationException("OPENAI_MODEL not set");
 
     public async IAsyncEnumerable<AssistantResponseMessage> GetAssistantStreaming(
@@ -18,7 +15,8 @@ public class OpenAIManager(ResponsesClient client,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         // Get tools provided by MCP server
-        var (mcpClient, mcpTools) = await mcpToolsProvider.GetToolsAsync();
+        var mcpClient = await mcpToolsProvider.GetClientAsync();
+        var mcpTools = await mcpClient.ListFunctionTools();
 
         // We loop until no more function calls are required
         bool requiresAction;
@@ -102,7 +100,7 @@ public class OpenAIManager(ResponsesClient client,
     {
         var options = new CreateResponseOptions(Model, conversation)
         {
-            Instructions = await developerMessage.Value,
+            Instructions = await developerMessageProvider.GetAsync(),
             ReasoningOptions = new()
             {
                 ReasoningEffortLevel = ResponseReasoningEffortLevel.Low
@@ -116,17 +114,6 @@ public class OpenAIManager(ResponsesClient client,
         foreach (var tool in mcpTools) { options.Tools.Add(tool); }
 
         return options;
-    }
-
-    private static async Task<string> LoadDeveloperMessage()
-    {
-        const string resourceName = "ChatBot.developer-message.md";
-
-        var asm = Assembly.GetExecutingAssembly();
-        using var stream = asm.GetManifestResourceStream(resourceName)
-            ?? throw new FileNotFoundException($"Resource {resourceName} not found.");
-        using var reader = new StreamReader(stream);
-        return await reader.ReadToEndAsync();
     }
 
     public record AssistantResponseMessage(string DeltaText);

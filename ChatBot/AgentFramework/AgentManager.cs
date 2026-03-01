@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Microsoft.Agents.AI;
@@ -9,9 +8,8 @@ using OpenAI.Chat;
 
 namespace ChatBot.AgentFramework;
 
-public sealed class AgentManager(IConfiguration config, McpToolsProvider mcpToolsProvider) : IDisposable
+public sealed class AgentManager(IConfiguration config, McpToolsProvider mcpToolsProvider, DeveloperMessageProvider developerMessageProvider) : IDisposable
 {
-    private static readonly Lazy<Task<string>> developerMessage = new(LoadDeveloperMessage);
     private string Model => config["OPENAI_MODEL"] ?? throw new InvalidOperationException("OPENAI_MODEL not set");
 
     private AIAgent? agent;
@@ -33,16 +31,25 @@ public sealed class AgentManager(IConfiguration config, McpToolsProvider mcpTool
 
             // Build the agent — notice how much simpler this is compared to the traditional approach!
             // No manual tool dispatch loop, no JSON schema generation, no manual MCP tool conversion.
+            // NOTE: Using GetChatClient here because the ResponsesClient path through
+            // Microsoft.Extensions.AI.OpenAI 10.3.0 has a binary incompatibility with
+            // OpenAI 2.9.0 (missing ResponsesClient.Model property). Switch to
+            // GetResponsesClient() once a compatible OpenAI SDK version is available.
             var builtAgent = new OpenAIClient(config["OPENAI_API_KEY"]!)
                 .GetChatClient(Model)
-                .AsAIAgent(
-                    instructions: await developerMessage.Value,
-                    name: "FlowerShopAssistant",
-                    tools: [
-                        // Local function tool — just a decorated method, AIFunctionFactory handles the schema
-                        AIFunctionFactory.Create(GetAvailableColorsForFlower),
-                        .. mcpTools
-                    ]);
+                .AsAIAgent(new ChatClientAgentOptions
+                {
+                    Name = "FlowerShopAssistant",
+                    ChatOptions = new()
+                    {
+                        Instructions = await developerMessageProvider.GetAsync(),
+                        Tools = [
+                            // Local function tool — just a decorated method, AIFunctionFactory handles the schema
+                            AIFunctionFactory.Create(GetAvailableColorsForFlower),
+                            .. mcpTools
+                        ]
+                    }
+                });
 
             // Enable observability — one-liner vs manual ActivitySource spans
             agent = builtAgent.AsBuilder()
@@ -129,23 +136,22 @@ public sealed class AgentManager(IConfiguration config, McpToolsProvider mcpTool
     }
 
     // Function tool — just a decorated static method, no manual JSON schema needed!
+    private static readonly Dictionary<string, List<string>> FlowerColors = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Rose"] = ["red", "yellow", "purple"],
+        ["Lily"] = ["yellow", "pink", "white"],
+        ["Gerbera"] = ["pink", "red", "yellow"],
+        ["Freesia"] = ["white", "pink", "red", "yellow"],
+        ["Tulip"] = ["red", "yellow", "purple"],
+        ["Sunflower"] = ["yellow"]
+    };
+
     [Description("Gets a list of available colors for a specific flower")]
     static string GetAvailableColorsForFlower(
         [Description("The name of the flower")] string flowerName)
-    {
-        var flowerColors = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["Rose"] = ["red", "yellow", "purple"],
-            ["Lily"] = ["yellow", "pink", "white"],
-            ["Gerbera"] = ["pink", "red", "yellow"],
-            ["Freesia"] = ["white", "pink", "red", "yellow"],
-            ["Tulip"] = ["red", "yellow", "purple"],
-            ["Sunflower"] = ["yellow"]
-        };
-        return flowerColors.TryGetValue(flowerName, out var colors)
+        => FlowerColors.TryGetValue(flowerName, out var colors)
             ? string.Join(", ", colors)
             : "No colors found for this flower.";
-    }
 
     public void Dispose()
     {
@@ -153,15 +159,6 @@ public sealed class AgentManager(IConfiguration config, McpToolsProvider mcpTool
         GC.SuppressFinalize(this);
     }
 
-    private static async Task<string> LoadDeveloperMessage()
-    {
-        const string resourceName = "ChatBot.developer-message.md";
-        var asm = Assembly.GetExecutingAssembly();
-        using var stream = asm.GetManifestResourceStream(resourceName)
-            ?? throw new FileNotFoundException($"Resource {resourceName} not found.");
-        using var reader = new StreamReader(stream);
-        return await reader.ReadToEndAsync();
-    }
 }
 
 public record AssistantResponseMessage(string DeltaText);

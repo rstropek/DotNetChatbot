@@ -1,16 +1,29 @@
-using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
-using OpenAI.Responses;
 
 namespace ChatBot;
 
+/// <summary>
+/// Provides lazy-initialized access to MCP (Model Context Protocol) tools exposed by the
+/// shopping cart MCP server. A single <see cref="McpClient"/> is created on first use and
+/// reused for the lifetime of the provider. Thread safety during initialization is guaranteed
+/// via a <see cref="SemaphoreSlim"/>.
+/// </summary>
 public class McpToolsProvider(IConfiguration config, ILoggerFactory loggerFactory) : IAsyncDisposable
 {
     private McpClient? mcpClient;
-    private FunctionTool[]? mcpTools;
+
+    // Guards McpClient initialization against concurrent callers.
+    // Initialized with a count of 1 so it acts as a mutex: only one thread
+    // may execute the creation logic at a time. Once the client is created,
+    // the outer null-check short-circuits all subsequent calls before they
+    // ever try to acquire the semaphore.
     private readonly SemaphoreSlim semaphore = new(1, 1);
 
-    private async Task<McpClient> GetClientAsync()
+    /// <summary>
+    /// Returns the shared <see cref="McpClient"/>, creating and connecting it on the first call.
+    /// Subsequent calls return the cached instance without acquiring the semaphore.
+    /// </summary>
+    public async Task<McpClient> GetClientAsync()
     {
         if (mcpClient != null)
         {
@@ -43,38 +56,6 @@ public class McpToolsProvider(IConfiguration config, ILoggerFactory loggerFactor
         }
     }
 
-    /// <summary>
-    /// Returns MCP tools as OpenAI FunctionTool[] for the traditional implementation.
-    /// </summary>
-    public async Task<(McpClient Client, FunctionTool[] Tools)> GetToolsAsync()
-    {
-        var client = await GetClientAsync();
-
-        if (mcpTools != null)
-        {
-            return (client, mcpTools);
-        }
-
-        mcpTools = await client.ListFunctionTools();
-        if (mcpTools.Length == 0)
-        {
-            throw new InvalidOperationException("MCP server offers no tools, this should never happen");
-        }
-
-        return (client, mcpTools);
-    }
-
-    /// <summary>
-    /// Returns MCP tools as AITool[] for the Agent Framework implementation.
-    /// McpClientTool implements AITool, so the conversion is trivial.
-    /// </summary>
-    public async Task<AITool[]> GetMcpToolsAsAIToolsAsync()
-    {
-        var client = await GetClientAsync();
-        var tools = await client.ListToolsAsync();
-        return [.. tools.Cast<AITool>()];
-    }
-
     public async ValueTask DisposeAsync()
     {
         if (mcpClient != null)
@@ -84,24 +65,5 @@ public class McpToolsProvider(IConfiguration config, ILoggerFactory loggerFactor
 
         semaphore.Dispose();
         GC.SuppressFinalize(this);
-    }
-}
-
-public static class McpClientToolExtensions
-{
-    extension(McpClientTool t)
-    {
-        public FunctionTool ToFunctionTool() => ResponseTool.CreateFunctionTool(
-            functionName: t.Name,
-            functionDescription: t.Description,
-            functionParameters: BinaryData.FromString(
-                t.JsonSchema.GetRawText()),
-            strictModeEnabled: false);
-    }
-
-    extension(McpClient client)
-    {
-        public async Task<FunctionTool[]> ListFunctionTools() =>
-            [.. (await client.ListToolsAsync()).Select(t => t.ToFunctionTool())];
     }
 }

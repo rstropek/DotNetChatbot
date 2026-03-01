@@ -14,6 +14,7 @@ builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 
 // Shared: MCP tools provider used by both implementations
 builder.Services.AddSingleton<McpToolsProvider>();
+builder.Services.AddSingleton<DeveloperMessageProvider>();
 
 // Traditional implementation services
 builder.Services.AddScoped<OpenAIManager>();
@@ -34,7 +35,7 @@ await app.Services.ApplyMigrations();
 app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
 // Map both endpoint groups — same SSE format, different URL prefixes
-app.MapTraditionalConversationsEndpoints();      // /conversations/...
+app.MapTraditionalConversationsEndpoints();       // /conversations/...
 app.MapAgentFrameworkConversationsEndpoints();    // /af/conversations/...
 
 app.Run();

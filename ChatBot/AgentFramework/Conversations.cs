@@ -5,6 +5,8 @@ namespace ChatBot.AgentFramework;
 
 public static class AgentFrameworkConversationEndpoints
 {
+    private const string GetConversationHistoryRouteName = "AfGetConversationHistory";
+
     extension(IEndpointRouteBuilder app)
     {
         public IEndpointRouteBuilder MapAgentFrameworkConversationsEndpoints()
@@ -12,19 +14,22 @@ public static class AgentFrameworkConversationEndpoints
             var api = app.MapGroup("/af/conversations");
             api.MapPost("/", AddConversation);
             api.MapPost("/{conversationId}/chat", Chat);
-            api.MapGet("/{conversationId}", GetHistory);
+            api.MapGet("/{conversationId}", GetHistory).WithName(GetConversationHistoryRouteName);
 
             return app;
         }
     }
 
-    public async static Task<Created<NewConversationResponse>> AddConversation(ApplicationDataContext context)
+    public async static Task<Created<NewConversationResponse>> AddConversation(
+        ApplicationDataContext context,
+        LinkGenerator linkGenerator)
     {
         // Same as traditional — just creates a DB row to get a conversation ID
         var conversation = new Conversation();
         context.Conversations.Add(conversation);
         await context.SaveChangesAsync();
-        return TypedResults.Created(null as string, new NewConversationResponse(conversation.Id));
+        var url = linkGenerator.GetPathByName(GetConversationHistoryRouteName, new { conversationId = conversation.Id });
+        return TypedResults.Created(url, new NewConversationResponse(conversation.Id));
     }
 
     public static async Task<IResult> Chat(

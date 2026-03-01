@@ -11,6 +11,8 @@ namespace ChatBot.Traditional;
 
 public static class ConversationEndpoints
 {
+    private const string GetConversationHistoryRouteName = "GetConversationHistory";
+
     extension(IEndpointRouteBuilder app)
     {
         public IEndpointRouteBuilder MapTraditionalConversationsEndpoints()
@@ -18,18 +20,21 @@ public static class ConversationEndpoints
             var api = app.MapGroup("/conversations");
             api.MapPost("/", AddConversation);
             api.MapPost("/{conversationId}/chat", Chat);
-            api.MapGet("/{conversationId}", GetHistory);
+            api.MapGet("/{conversationId}", GetHistory).WithName(GetConversationHistoryRouteName);
 
             return app;
         }
     }
 
-    public async static Task<Created<NewConversationResponse>> AddConversation(ApplicationDataContext context)
+    public async static Task<Created<NewConversationResponse>> AddConversation(
+        ApplicationDataContext context,
+        LinkGenerator linkGenerator)
     {
         var conversation = new Conversation();
         context.Conversations.Add(conversation);
         await context.SaveChangesAsync();
-        return TypedResults.Created(null as string, new NewConversationResponse(conversation.Id));
+        var url = linkGenerator.GetPathByName(GetConversationHistoryRouteName, new { conversationId = conversation.Id });
+        return TypedResults.Created(url, new NewConversationResponse(conversation.Id));
     }
 
     public async static Task<IResult> Chat(
@@ -104,64 +109,31 @@ public static class ConversationEndpoints
 
         var conversation = DeserializeSession(serializedSession);
 
-        var messages = new List<object>();
-        foreach (var item in conversation)
-        {
-            var itemJson = SerializeResponseItem(item);
-            using var doc = JsonDocument.Parse(itemJson);
-            var root = doc.RootElement;
-
-            if (root.TryGetProperty("type", out var typeProp))
+        var messages = conversation
+            .OfType<MessageResponseItem>()
+            .Where(m => m.Role is MessageRole.User or MessageRole.Assistant)
+            .Select(m => new
             {
-                var type = typeProp.GetString();
-                if (type == "message" && root.TryGetProperty("role", out var roleProp))
-                {
-                    var role = roleProp.GetString();
-                    if (role is "user" or "assistant")
-                    {
-                        var text = ExtractTextContent(root);
-                        if (text is not null)
-                        {
-                            messages.Add(new { role, content = text });
-                        }
-                    }
-                }
-            }
-        }
+                role = m.Role == MessageRole.User ? "user" : "assistant",
+                content = m.Content
+                    .Select(c => c.Text)
+                    .FirstOrDefault(t => t is not null)
+            })
+            .Where(m => m.content is not null)
+            .ToList();
 
         return Results.Ok(messages);
     }
 
-    private static string? ExtractTextContent(JsonElement root)
-    {
-        if (root.TryGetProperty("content", out var content) && content.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var part in content.EnumerateArray())
-            {
-                if (part.TryGetProperty("text", out var text))
-                {
-                    return text.GetString();
-                }
-            }
-        }
-
-        return null;
-    }
 
     private static List<ResponseItem> DeserializeSession(string? serializedSession)
     {
         if (serializedSession is null) { return []; }
 
         using var doc = JsonDocument.Parse(serializedSession);
-        var result = new List<ResponseItem>();
-        foreach (var element in doc.RootElement.EnumerateArray())
-        {
-            var item = ModelReaderWriter.Read<ResponseItem>(
-                BinaryData.FromString(element.GetRawText()),
-                ModelReaderWriterOptions.Json)!;
-            result.Add(item);
-        }
-        return result;
+        return [.. doc.RootElement.EnumerateArray()
+            .Select(e => ModelReaderWriter.Read<ResponseItem>(
+                BinaryData.FromString(e.GetRawText()), ModelReaderWriterOptions.Json)!)];
     }
 
     private static string SerializeSession(List<ResponseItem> conversation)
@@ -180,16 +152,6 @@ public static class ConversationEndpoints
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
-    private static string SerializeResponseItem(ResponseItem item)
-    {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer))
-        {
-            var itemAsJson = item as IJsonModel<ResponseItem>;
-            itemAsJson!.Write(writer, ModelReaderWriterOptions.Json);
-        }
-        return Encoding.UTF8.GetString(buffer.WrittenSpan);
-    }
 
     public record NewConversationResponse(int ConversationId);
 

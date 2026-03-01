@@ -10,8 +10,8 @@
     <PackageReference Include="ModelContextProtocol" Version="1.0.0" />
     <PackageReference Include="ModelContextProtocol.Core" Version="1.0.0" />
     <PackageReference Include="OpenAI" Version="2.9.0" />
-    <PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="*-*" />
-    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="*" />
+    <PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.0.0-rc2" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.3.0" />
   </ItemGroup>
 
   <PropertyGroup>

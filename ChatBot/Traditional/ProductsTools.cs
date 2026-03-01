@@ -11,19 +11,19 @@ public static class ProductsTools
         strictModeEnabled: false
     );
 
+    private static readonly Dictionary<string, List<string>> FlowerColors = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Rose"] = ["red", "yellow", "purple"],
+        ["Lily"] = ["yellow", "pink", "white"],
+        ["Gerbera"] = ["pink", "red", "yellow"],
+        ["Freesia"] = ["white", "pink", "red", "yellow"],
+        ["Tulip"] = ["red", "yellow", "purple"],
+        ["Sunflower"] = ["yellow"]
+    };
+
     public static IEnumerable<string> GetAvailableColorsForFlower(GetAvailableColorsForFlowerRequest request)
     {
-        var flowerColors = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["Rose"] = ["red", "yellow", "purple"],
-            ["Lily"] = ["yellow", "pink", "white"],
-            ["Gerbera"] = ["pink", "red", "yellow"],
-            ["Freesia"] = ["white", "pink", "red", "yellow"],
-            ["Tulip"] = ["red", "yellow", "purple"],
-            ["Sunflower"] = ["yellow"]
-        };
-
-        return flowerColors.TryGetValue(request.FlowerName, out var colors) ? colors : [];
+        return FlowerColors.TryGetValue(request.FlowerName, out var colors) ? colors : [];
     }
 
     public record GetAvailableColorsForFlowerRequest(string FlowerName);
