@@ -7,6 +7,6 @@
   <Project Path="CartMcp/CartMcp.csproj" />
   <Project Path="ChatBot/ChatBot.csproj" />
   <Project Path="ChatBotDb/ChatBotDb.csproj" />
-  <Project Path="DotNetChatbot.AppHost/DotNetChatbot.AppHost.csproj" />
-  <Project Path="DotNetChatbot.ServiceDefaults/DotNetChatbot.ServiceDefaults.csproj" />
+  <Project Path="AppHost/AppHost.csproj" />
+  <Project Path="ServiceDefaults/ServiceDefaults.csproj" />
 </Solution>

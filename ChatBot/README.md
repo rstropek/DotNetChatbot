@@ -2,6 +2,22 @@
 
 This is the main chatbot API service that powers the intelligent conversation experience. It serves as the core backend that integrates OpenAI's language models with the Model Context Protocol (MCP) for extensible functionality.
 
+## Two Implementations Side by Side
+
+The service contains **two implementations** of the same chatbot, allowing students to compare approaches:
+
+| | Traditional (`/conversations/`) | Agent Framework (`/af/conversations/`) |
+|-|---|----|
+| **Folder** | `Traditional/` | `AgentFramework/` |
+| **Tool dispatch** | Manual `do/while` loop detecting `FunctionCallResponseItem`, switching on function name, deserializing arguments, calling the function, storing results | Automatic — `RunStreamingAsync` handles the entire tool calling loop |
+| **Tool definition** | `FunctionHelpers.ToJsonSchema<T>()` + `ResponseTool.CreateFunctionTool(...)` + separate request record type | `[Description]` attribute on a static method + `AIFunctionFactory.Create()` |
+| **MCP integration** | Manual conversion from `McpClientTool` to `FunctionTool`, manual `CallToolAsync` dispatch | `McpClientTool` implements `AITool` — pass directly to agent |
+| **Conversation history** | Stored in SQLite via `ISessionRepository` as serialized `List<ResponseItem>`, loaded on each request | Managed in-memory by `AgentSession`, serialized to SQLite via `ISessionRepository` |
+| **Streaming** | Manual `await foreach` over `StreamingResponseUpdate`, filtering for `StreamingResponseOutputTextDeltaUpdate` | `await foreach` over `AgentResponseUpdate`, reading `.Text` |
+| **Observability** | Manual `ActivitySource` spans | `.UseOpenTelemetry()` one-liner on the agent builder |
+
+Both implementations expose the **same SSE format** (`{ "deltaText": "..." }` with event type `textDelta`), so the frontend only needs to change the URL prefix.
+
 ## What This Service Does
 
 The ChatBot service acts as a flower shop salesperson, providing an intelligent conversational interface that:
@@ -9,11 +25,31 @@ The ChatBot service acts as a flower shop salesperson, providing an intelligent 
 - **Processes Natural Language**: Uses OpenAI's GPT models to understand customer requests and provide helpful responses
 - **Streams Real-time Responses**: Leverages .NET 10's new Server-Sent Events (SSE) implementation for smooth, real-time chat experiences
 - **Integrates External Tools**: Connects to MCP servers to access additional functionality like shopping cart management
-- **Maintains Conversation History**: Persists chat conversations in a database for context and continuity
+- **Maintains Conversation History**: Persists chat conversations as session blobs in SQLite via a unified `ISessionRepository` (used by both implementations)
+
+## Project Structure
+
+```
+ChatBot/
+  Program.cs                         # Registers both implementations, maps both endpoint groups
+  McpToolsProvider.cs                # Shared MCP client — provides tools for both implementations
+  MigrationManager.cs               # Shared DB migration logic
+  developer-message.md              # Shared system prompt (embedded resource)
+  Traditional/
+    OpenAI.cs                        # OpenAIManager — manual streaming + tool dispatch
+    Conversations.cs                 # Endpoints at /conversations/...
+    ProductsTools.cs                 # FunctionTool definition with manual JSON schema
+    FunctionHelpers.cs               # JSON schema generation utility
+  AgentFramework/
+    AgentManager.cs                  # AIAgent-based implementation with automatic tool handling
+    Conversations.cs                 # Endpoints at /af/conversations/...
+    README.md                        # Detailed comparison of the two approaches
+```
 
 ## Key Features Demonstrated
 
 - **OpenAI API Integration**: Modern .NET 10 patterns for working with OpenAI's streaming APIs
+- **Microsoft Agent Framework**: Simplified agent construction with automatic tool dispatch and session management
 - **Function Calling**: Dynamic tool discovery and execution through the Model Context Protocol
 - **Async Streaming**: Real-time response streaming using `IAsyncEnumerable` and SSE
 - **Entity Framework Core**: Database operations with SQLite for conversation persistence
@@ -29,15 +65,11 @@ The ChatBot service acts as a flower shop salesperson, providing an intelligent 
 5. Tool calls (like adding items to cart) are executed automatically
 6. All interactions are persisted for future reference
 
-## Technical Highlights
+## NuGet Packages
 
-This service showcases several .NET 10 and modern development features:
-
-- Extension methods for endpoint mapping
-- Minimal APIs with typed results
-- Background service integration
-- CORS configuration for web client support
-- Configuration-based OpenAI client setup
-- Activity source integration for distributed tracing
-
-The service is designed to be a comprehensive example of building intelligent, streaming APIs with the latest .NET technologies.
+| Package | Purpose |
+|---------|---------|
+| `OpenAI` | Direct OpenAI SDK (used by traditional implementation) |
+| `ModelContextProtocol` | MCP client for tool integration |
+| `Microsoft.Agents.AI.OpenAI` | Agent Framework with OpenAI support |
+| `Microsoft.Extensions.AI.OpenAI` | `IChatClient` abstraction over OpenAI |

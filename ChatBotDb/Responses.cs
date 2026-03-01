@@ -1,53 +1,27 @@
-using System.Buffers;
-using System.ClientModel.Primitives;
-using System.Text;
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using OpenAI.Responses;
 
 namespace ChatBotDb;
 
-public interface IConversationRepository
+public interface ISessionRepository
 {
-    Task<List<ResponseItem>> GetConversation(int conversationId);
-    Task AddResponseToConversation(int conversationId, ResponseItem responseItem);
-
+    Task<string?> GetSession(int conversationId);
+    Task SaveSession(int conversationId, string sessionData);
 }
 
-public class ConversationRepository(ApplicationDataContext context) : IConversationRepository
+public class SessionRepository(ApplicationDataContext context) : ISessionRepository
 {
-    public async Task<List<ResponseItem>> GetConversation(int conversationId)
-    {
-        var conversation = await context.Conversations
-            .Include(c => c.Messages)
-            .FirstOrDefaultAsync(c => c.Id == conversationId)
-            ?? throw new ConversationNotFoundException();
-
-        return [.. conversation.Messages
-            .OrderBy(m => m.Id)
-            .Select(m => ModelReaderWriter.Read<ResponseItem>(
-                BinaryData.FromString(m.Content),
-                ModelReaderWriterOptions.Json)!)];
-    }
-
-    public async Task AddResponseToConversation(int conversationId, ResponseItem responseItem)
+    public async Task<string?> GetSession(int conversationId)
     {
         var conversation = await context.Conversations.FirstOrDefaultAsync(c => c.Id == conversationId)
             ?? throw new ConversationNotFoundException();
+        return conversation.SessionData;
+    }
 
-        var itemAsJson = responseItem as IJsonModel<ResponseItem>;
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer))
-        {
-            itemAsJson!.Write(writer, ModelReaderWriterOptions.Json);
-        }
-
-        var message = new Message
-        {
-            ConversationId = conversationId,
-            Content = Encoding.UTF8.GetString(buffer.WrittenSpan)
-        };
-        context.Messages.Add(message);
+    public async Task SaveSession(int conversationId, string sessionData)
+    {
+        var conversation = await context.Conversations.FirstOrDefaultAsync(c => c.Id == conversationId)
+            ?? throw new ConversationNotFoundException();
+        conversation.SessionData = sessionData;
         await context.SaveChangesAsync();
     }
 }

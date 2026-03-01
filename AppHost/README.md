@@ -1,4 +1,4 @@
-# DotNetChatbot.AppHost - Aspire Orchestration
+# AppHost - Aspire Orchestration
 
 This is the .NET Aspire orchestration host that brings together all the components of the chatbot solution. It demonstrates modern cloud-native application orchestration, service discovery, and configuration management using .NET Aspire.
 

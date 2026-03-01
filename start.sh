@@ -1,1 +1,1 @@
-dotnet run --project ./DotNetChatbot.AppHost
+dotnet run --project ./AppHost

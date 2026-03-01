@@ -14,13 +14,12 @@ The ChatBotDb project:
 ## Key Components
 
 ### Data Models
-- **Conversation**: Represents chat conversations with unique identifiers
-- **Message**: Stores individual messages and responses within conversations
+- **Conversation**: Represents chat conversations with unique identifiers and serialized session data
 - **Order**: Represents flower bouquet orders placed through the shopping cart
 
 ### Database Context
 - **ApplicationDataContext**: The main EF Core context that manages all entities
-- **Repository Pattern**: Implements `IConversationRepository` for clean data access abstraction
+- **Repository Pattern**: Implements `ISessionRepository` for clean data access abstraction — a single interface used by both the Traditional and Agent Framework implementations
 
 ### Migration Management
 - **Initial Migration**: Sets up the base database schema

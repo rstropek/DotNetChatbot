@@ -9,6 +9,16 @@
 <body>
     <div id="app">
         <div id="chat-container">
+            <div id="header-section">
+                <div id="implementation-toggle">
+                    <label for="impl-select">Implementation:</label>
+                    <select id="impl-select">
+                        <option value="traditional">Traditional (OpenAI SDK)</option>
+                        <option value="agentframework">Agent Framework</option>
+                    </select>
+                    <button type="button" id="new-conversation-btn">New Conversation</button>
+                </div>
+            </div>
             <div id="conversation-history">
                 <div class="welcome-message">
                     <p>Welcome to the Chat Bot! Start a conversation below.</p>
@@ -16,10 +26,10 @@
             </div>
             <div id="input-section">
                 <form id="chat-form">
-                    <input 
-                        type="text" 
-                        id="message-input" 
-                        placeholder="Type your message here..." 
+                    <input
+                        type="text"
+                        id="message-input"
+                        placeholder="Type your message here..."
                         required
                         autocomplete="off"
                     >

@@ -1,19 +1,11 @@
-using System.Collections.ObjectModel;
-
 namespace ChatBotDb;
 
 public class Conversation
 {
     public int Id { get; set; }
-    public Collection<Message> Messages { get; } = [];
-}
 
-public class Message
-{
-    public int Id { get; set; }
-    public int ConversationId { get; set; }
-    public Conversation? Conversation { get; set; }
-    public string Content { get; set; } = "";
+    /// <summary>Serialized session JSON for both Traditional and Agent Framework implementations.</summary>
+    public string? SessionData { get; set; }
 }
 
 public class Order

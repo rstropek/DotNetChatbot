@@ -8,7 +8,7 @@
             "name": "C#: AppHost Debug",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/DotNetChatbot.AppHost/DotNetChatbot.AppHost.csproj"
+            "projectPath": "${workspaceFolder}/AppHost/AppHost.csproj"
         }
 
     ]

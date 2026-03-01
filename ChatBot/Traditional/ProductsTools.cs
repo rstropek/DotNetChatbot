@@ -1,6 +1,6 @@
 using OpenAI.Responses;
 
-namespace ChatBot;
+namespace ChatBot.Traditional;
 
 public static class ProductsTools
 {

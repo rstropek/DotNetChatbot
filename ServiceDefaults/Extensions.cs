@@ -62,6 +62,9 @@ public static class ServiceDefaultsExtensions
             .WithTracing(tracing =>
             {
                 tracing.AddSource(builder.Environment.ApplicationName)
+                    .AddSource("ChatBot.AgentFramework")
+                    .AddSource("Microsoft.Extensions.AI")
+                    .AddSource("Microsoft.Agents")
                     .AddAspNetCoreInstrumentation(tracing =>
                         // Exclude health check requests from tracing
                         tracing.Filter = context =>

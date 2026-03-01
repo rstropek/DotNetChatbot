@@ -7,6 +7,7 @@ This is a comprehensive sample project for a conference workshop that demonstrat
 This workshop sample demonstrates:
 
 - **OpenAI API Integration**: Working with OpenAI's latest APIs in .NET 10 for intelligent chat functionality
+- **Microsoft Agent Framework**: Side-by-side comparison of the traditional OpenAI SDK approach and the new Agent Framework that dramatically simplifies tool calling, streaming, and conversation management
 - **Modern .NET Features**: Utilizing the latest language features from .NET 9 and .NET 10
 - **Server-Sent Events (SSE)**: New streaming implementation in .NET 10 for real-time chat experiences
 - **Model Context Protocol (MCP)**: Both server and client implementations for extensible tool integration
@@ -17,12 +18,12 @@ This workshop sample demonstrates:
 
 The solution consists of several interconnected components:
 
-- **ChatBot**: Main chatbot API service with OpenAI integration and streaming responses
+- **ChatBot**: Main chatbot API service with two implementations — a traditional OpenAI SDK approach (`Traditional/`) and a Microsoft Agent Framework approach (`AgentFramework/`)
 - **CartMcp**: MCP server providing shopping cart functionality as external tools
 - **ChatBotDb**: Shared database layer with Entity Framework Core
 - **ChatUI**: Modern web frontend for the chat interface
-- **DotNetChatbot.AppHost**: Aspire orchestration host that ties everything together
-- **DotNetChatbot.ServiceDefaults**: Shared service configuration and defaults
+- **AppHost**: Aspire orchestration host that ties everything together
+- **ServiceDefaults**: Shared service configuration and defaults
 
 ## The Demo Scenario
 
@@ -33,6 +34,7 @@ The chatbot acts as a friendly flower shop salesperson, helping customers choose
 - Real-time streaming responses
 - Database persistence
 - Web UI interactions
+- Comparing a traditional, manual approach with the much simpler Agent Framework approach
 
 ## Getting Started
 
@@ -82,6 +84,8 @@ The solution uses `AnalysisLevel=latest-all` for comprehensive code analysis. Se
 * [.NET 10 What's New](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/overview)
 * [Official .NET Library for OpenAI](https://github.com/openai/openai-dotnet)
 * [OpenAI API Reference](https://platform.openai.com/docs/api-reference/introduction)
+* [Microsoft Agent Framework](https://github.com/microsoft/agent-framework)
+* [Microsoft.Extensions.AI Documentation](https://learn.microsoft.com/en-us/dotnet/ai/ai-extensions)
 * [Model Context Protocol (MCP) Specification](https://modelcontextprotocol.io/docs/getting-started/intro)
 * [Official C# SDK for MCP](https://github.com/modelcontextprotocol/csharp-sdk)
 * [.NET Aspire Documentation](https://learn.microsoft.com/en-us/dotnet/aspire/)

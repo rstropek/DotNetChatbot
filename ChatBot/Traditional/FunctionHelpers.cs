@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Schema;
 
-namespace ChatBot;
+namespace ChatBot.Traditional;
 
 public static class FunctionHelpers
 {

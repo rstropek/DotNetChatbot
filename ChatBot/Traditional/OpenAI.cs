@@ -1,81 +1,22 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using ChatBotDb;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using OpenAI.Responses;
 
-namespace ChatBot;
+namespace ChatBot.Traditional;
 
-public class McpToolsProvider(IConfiguration config, ILoggerFactory loggerFactory) : IAsyncDisposable
-{
-    private McpClient? mcpClient;
-    private FunctionTool[]? mcpTools;
-    private readonly SemaphoreSlim semaphore = new(1, 1);
-
-    public async Task<(McpClient Client, FunctionTool[] Tools)> GetToolsAsync()
-    {
-        if (mcpClient != null && mcpTools != null)
-        {
-            return (mcpClient, mcpTools);
-        }
-
-        await semaphore.WaitAsync();
-        try
-        {
-            if (mcpClient != null && mcpTools != null)
-            {
-                return (mcpClient, mcpTools);
-            }
-
-#pragma warning disable CA2000 // Transport ownership is transferred to McpClient, disposed via DisposeAsync
-            var transport = new HttpClientTransport(new HttpClientTransportOptions
-            {
-                Endpoint = new Uri(config["Services:cart-mcp:http:0"]!),
-                Name = "Shopping Cart MCP"
-            });
-#pragma warning restore CA2000
-            mcpClient = await McpClient.CreateAsync(transport, loggerFactory: loggerFactory);
-            mcpTools = await mcpClient.ListFunctionTools();
-            if (mcpTools.Length == 0)
-            {
-                throw new InvalidOperationException("MCP server offers no tools, this should never happen");
-            }
-
-            return (mcpClient, mcpTools);
-        }
-        finally
-        {
-            semaphore.Release();
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (mcpClient != null)
-        {
-            await mcpClient.DisposeAsync();
-        }
-
-        semaphore.Dispose();
-        GC.SuppressFinalize(this);
-    }
-}
-
-public class OpenAIManager(ResponsesClient client, IConversationRepository context,
+public class OpenAIManager(ResponsesClient client,
     IConfiguration config, McpToolsProvider mcpToolsProvider)
 {
     private static readonly Lazy<Task<string>> developerMessage = new(LoadDeveloperMessage);
     private string Model => config["OPENAI_MODEL"] ?? throw new InvalidOperationException("OPENAI_MODEL not set");
 
     public async IAsyncEnumerable<AssistantResponseMessage> GetAssistantStreaming(
-        int conversationId,
+        List<ResponseItem> conversation,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        // Get conversation history from database
-        var conversation = await context.GetConversation(conversationId);
-
         // Get tools provided by MCP server
         var (mcpClient, mcpTools) = await mcpToolsProvider.GetToolsAsync();
 
@@ -101,8 +42,7 @@ public class OpenAIManager(ResponsesClient client, IConversationRepository conte
                 if (chunk is StreamingResponseOutputItemDoneUpdate doneUpdate
                     && doneUpdate.Item is not ReasoningResponseItem)
                 {
-                    // We got a final item from the LLM, let's store it in the database
-                    await context.AddResponseToConversation(conversationId, doneUpdate.Item);
+                    // Accumulate the item in memory
                     conversation.Add(doneUpdate.Item);
 
                     // The response might be a function call, in which case we need to execute it
@@ -150,7 +90,6 @@ public class OpenAIManager(ResponsesClient client, IConversationRepository conte
                                 break;
                         }
 
-                        await context.AddResponseToConversation(conversationId, functionResult);
                         conversation.Add(functionResult);
                     }
                 }
@@ -191,23 +130,4 @@ public class OpenAIManager(ResponsesClient client, IConversationRepository conte
     }
 
     public record AssistantResponseMessage(string DeltaText);
-}
-
-public static class McpClientToolExtensions
-{
-    extension(McpClientTool t)
-    {
-        public FunctionTool ToFunctionTool() => ResponseTool.CreateFunctionTool(
-            functionName: t.Name,
-            functionDescription: t.Description,
-            functionParameters: BinaryData.FromString(
-                t.JsonSchema.GetRawText()),
-            strictModeEnabled: false);
-    }
-
-    extension(McpClient client)
-    {
-        public async Task<FunctionTool[]> ListFunctionTools() =>
-            [.. (await client.ListToolsAsync()).Select(t => t.ToFunctionTool())];
-    }
 }

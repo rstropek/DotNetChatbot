@@ -6,7 +6,6 @@ namespace ChatBotDb;
 public partial class ApplicationDataContext(DbContextOptions<ApplicationDataContext> options) : DbContext(options)
 {
     public DbSet<Conversation> Conversations { get; set; }
-    public DbSet<Message> Messages { get; set; }
     public DbSet<Order> Orders { get; set; }
 }
 

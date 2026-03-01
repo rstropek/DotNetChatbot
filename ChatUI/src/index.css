@@ -30,6 +30,50 @@ body {
   flex-direction: column;
 }
 
+#header-section {
+  padding: 10px 20px;
+  border-bottom: 1px solid #eee;
+  background-color: #f8f9fa;
+  border-radius: 10px 10px 0 0;
+}
+
+#implementation-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#implementation-toggle label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+}
+
+#impl-select {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
+  cursor: pointer;
+}
+
+#new-conversation-btn {
+  padding: 6px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
+  color: #555;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+#new-conversation-btn:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+}
+
 #conversation-history {
   flex: 1;
   padding: 20px;
