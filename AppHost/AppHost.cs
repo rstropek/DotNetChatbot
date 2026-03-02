@@ -4,7 +4,7 @@ var sqlite = builder.AddSqlite(
     "chatbot-db",
     builder.Configuration["Database:path"],
     builder.Configuration["Database:fileName"]);
-    //.WithSqliteWeb(); // optionally add web admin UI (requires Docker/podman)
+    //.WithSqliteWeb(); // optionally add web admin UI (requires Docker/podman); currently broken (bug).
 
 var apiKey = builder.AddParameter("openai-api-key", secret: true);
 var model = builder.AddParameter("openai-model", "gpt-5.2");
