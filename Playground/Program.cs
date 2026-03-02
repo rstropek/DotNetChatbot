@@ -1,17 +1,10 @@
-﻿using System.Reflection;
-using Microsoft.Agents.AI;
+using System.Reflection;
 
-foreach (var typeName in new[] { "Microsoft.Agents.AI.AgentSession", "Microsoft.Agents.AI.AgentSessionStateBag" })
+// Check extension methods on OpenAIResponseClientExtensions
+var asm = Assembly.Load("Microsoft.Agents.AI.OpenAI");
+var type = asm.GetType("OpenAI.Responses.OpenAIResponseClientExtensions")!;
+foreach (var m in type.GetMethods(BindingFlags.Public | BindingFlags.Static))
 {
-    var asm = typeof(AgentSession).Assembly;
-    var t = asm.GetType(typeName)!;
-    Console.WriteLine($"\n=== {t.Name} (base: {t.BaseType?.Name ?? "none"}) ===");
-    Console.WriteLine("Properties:");
-    foreach (var p in t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        Console.WriteLine($"  {p.PropertyType.Name} {p.Name}");
-    Console.WriteLine("Fields:");
-    foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-        Console.WriteLine($"  [{(f.IsPublic ? "pub" : f.IsPrivate ? "prv" : "int")}] {f.FieldType.Name} {f.Name}");
+    var parms = string.Join(", ", m.GetParameters().Select(p => $"{p.ParameterType.Name} {p.Name}"));
+    Console.WriteLine($"  {m.ReturnType.Name} {m.Name}({parms})");
 }
-
-

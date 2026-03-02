@@ -22,6 +22,7 @@ The solution consists of several interconnected components:
 - **CartMcp**: MCP server providing shopping cart functionality as external tools
 - **ChatBotDb**: Shared database layer with Entity Framework Core
 - **ChatUI**: Modern web frontend for the chat interface
+- **Tests**: Integration and unit tests using xUnit, covering database operations and web API endpoints
 - **AppHost**: Aspire orchestration host that ties everything together
 - **ServiceDefaults**: Shared service configuration and defaults
 
@@ -77,6 +78,14 @@ The solution uses `AnalysisLevel=latest-all` for comprehensive code analysis. Se
 | **CA1849** (Use async alternative) | `app.Run()` is the standard pattern in ASP.NET Core application templates; `RunAsync()` is not required in `Program.cs`. |
 | **CA1034** (Do not nest types) | C# 14 extension blocks trigger this warning as a false positive since extension members appear as nested types to the analyzer. |
 | **CA1708** (Names should differ by more than case) | C# 14 extension blocks on different types in the same class trigger this warning as a false positive. |
+
+Additionally, the **Tests** project suppresses these warnings in its `.csproj`:
+
+| Warning | Reason for Suppression |
+|---------|----------------------|
+| **CA1707** (Underscores in names) | Test methods use `Method_Scenario_Expected` naming convention, which is standard practice. |
+| **CA2007** (ConfigureAwait) | xUnit manages the synchronization context; `ConfigureAwait` is unnecessary in tests. |
+| **CA1515** (Types should be internal) | xUnit requires test classes and fixtures to be public. |
 
 ## Important Links
 

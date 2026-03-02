@@ -19,6 +19,7 @@ builder.Services.AddSingleton<DeveloperMessageProvider>();
 // Traditional implementation services
 builder.Services.AddScoped<OpenAIManager>();
 builder.Services.AddSingleton(_ => new ResponsesClient(
+    builder.Configuration["OPENAI_MODEL"] ?? throw new InvalidOperationException("OPENAI_MODEL not set"),
     new System.ClientModel.ApiKeyCredential(builder.Configuration["OPENAI_API_KEY"]!)));
 builder.Services.AddSingleton(_ => new ActivitySource(
     builder.Configuration["OTEL_SERVICE_NAME"] ?? throw new InvalidOperationException("OTEL_SERVICE_NAME not set")));

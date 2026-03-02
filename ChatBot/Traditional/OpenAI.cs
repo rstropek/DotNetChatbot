@@ -11,7 +11,7 @@ public class OpenAIManager(ResponsesClient client,
     private string Model => config["OPENAI_MODEL"] ?? throw new InvalidOperationException("OPENAI_MODEL not set");
 
     public async IAsyncEnumerable<AssistantResponseMessage> GetAssistantStreaming(
-        List<ResponseItem> conversation,
+        IList<ResponseItem> conversation,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         // Get tools provided by MCP server
@@ -96,9 +96,9 @@ public class OpenAIManager(ResponsesClient client,
         while (requiresAction);
     }
 
-    private async Task<CreateResponseOptions> GetResponseCreationOptions(List<ResponseItem> conversation, FunctionTool[] mcpTools)
+    private async Task<CreateResponseOptions> GetResponseCreationOptions(IList<ResponseItem> conversation, FunctionTool[] mcpTools)
     {
-        var options = new CreateResponseOptions(Model, conversation)
+        var options = new CreateResponseOptions(conversation, Model)
         {
             Instructions = await developerMessageProvider.GetAsync(),
             ReasoningOptions = new()

@@ -70,9 +70,9 @@ ChatBot/
 
 ## NuGet Packages
 
-| Package | Purpose |
-|---------|---------|
-| `OpenAI` | Direct OpenAI SDK (used by traditional implementation) |
-| `ModelContextProtocol` | MCP client for tool integration |
-| `Microsoft.Agents.AI.OpenAI` | Agent Framework with OpenAI support |
-| `Microsoft.Extensions.AI.OpenAI` | `IChatClient` abstraction over OpenAI |
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `OpenAI` | 2.8.0 | Direct OpenAI SDK — pinned to 2.8.0 to match the version `Microsoft.Extensions.AI.OpenAI` was compiled against (see [agent-framework#4380](https://github.com/microsoft/agent-framework/issues/4380)) |
+| `ModelContextProtocol` | 1.0.0 | MCP client for tool integration |
+| `Microsoft.Agents.AI.OpenAI` | 1.0.0-rc2 | Agent Framework with OpenAI support |
+| `Microsoft.Extensions.AI.OpenAI` | 10.3.0 | `IChatClient` abstraction over OpenAI |

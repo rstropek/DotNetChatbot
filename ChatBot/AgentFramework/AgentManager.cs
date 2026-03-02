@@ -5,6 +5,7 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using OpenAI.Chat;
+using OpenAI.Responses;
 
 namespace ChatBot.AgentFramework;
 
@@ -31,12 +32,8 @@ public sealed class AgentManager(IConfiguration config, McpToolsProvider mcpTool
 
             // Build the agent — notice how much simpler this is compared to the traditional approach!
             // No manual tool dispatch loop, no JSON schema generation, no manual MCP tool conversion.
-            // NOTE: Using GetChatClient here because the ResponsesClient path through
-            // Microsoft.Extensions.AI.OpenAI 10.3.0 has a binary incompatibility with
-            // OpenAI 2.9.0 (missing ResponsesClient.Model property). Switch to
-            // GetResponsesClient() once a compatible OpenAI SDK version is available.
             var builtAgent = new OpenAIClient(config["OPENAI_API_KEY"]!)
-                .GetChatClient(Model)
+                .GetResponsesClient(Model)
                 .AsAIAgent(new ChatClientAgentOptions
                 {
                     Name = "FlowerShopAssistant",

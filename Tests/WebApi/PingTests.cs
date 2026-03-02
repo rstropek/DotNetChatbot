@@ -5,7 +5,7 @@ public class PingTests(WebApiTestFixture fixture) : IClassFixture<WebApiTestFixt
     [Fact]
     public async Task Ping_ReturnsPong()
     {
-        var response = await fixture.HttpClient.GetAsync("/ping");
+        var response = await fixture.HttpClient.GetAsync(new Uri("/ping", UriKind.Relative));
 
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();

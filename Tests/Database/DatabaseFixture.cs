@@ -20,7 +20,7 @@ namespace Tests.Database;
 /// - Avoiding test pollution by using an isolated database per test class
 /// - Fast test execution compared to traditional database setup/teardown
 /// </remarks>
-public class DatabaseFixture : IDisposable
+public sealed class DatabaseFixture : IDisposable
 {
     /// <summary>
     /// Gets the SQLite connection to the in-memory database.
@@ -78,12 +78,8 @@ public class DatabaseFixture : IDisposable
     /// The CA1816 warning is suppressed because this class has no unmanaged resources
     /// and doesn't require a finalizer.
     /// </remarks>
-#pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
     public void Dispose()
-#pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
     {
-        // Disposing the connection closes it and destroys the in-memory database.
-        // All data and schema are lost at this point, ensuring test isolation.
         Connection.Dispose();
     }
 }
