@@ -34,6 +34,8 @@ await app.Services.ApplyMigrations();
 
 app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
+app.MapGet("/ping", () => "pong");
+
 // Map both endpoint groups — same SSE format, different URL prefixes
 app.MapTraditionalConversationsEndpoints();       // /conversations/...
 app.MapAgentFrameworkConversationsEndpoints();    // /af/conversations/...

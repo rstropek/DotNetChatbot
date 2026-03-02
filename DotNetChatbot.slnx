@@ -9,4 +9,5 @@
   <Project Path="ChatBotDb/ChatBotDb.csproj" />
   <Project Path="AppHost/AppHost.csproj" />
   <Project Path="ServiceDefaults/ServiceDefaults.csproj" />
+  <Project Path="Tests/Tests.csproj" />
 </Solution>
